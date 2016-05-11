@@ -14,7 +14,7 @@ class ApprIntegral {
   static double CalcTrig(string, double , const vector<int>& );
   static double termCalc(string, double );
   static string SubArgument(string);
-  ApprIntegral() {};
+  ApprIntegral(){}
 public:
    static double calcEquation(string equation, double num);
    static double approximateIntegral(string equation, double a, double b, int numOfRects);

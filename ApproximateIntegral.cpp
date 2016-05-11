@@ -58,24 +58,25 @@ double ApprIntegral::CalcPolynomial(string term, double num)
   int exp = 1;
   double x = 1; //The result of the exponent calulation. Similar to the x in the term but simply left as 1 if the term is a constant 
   //determines if raised to a power. If yes then the exponent is extracted.
-  size_t found = term.find('^');
-  if (found != string::npos)
+  size_t foundExp = term.find('^');
+  if (foundExp != string::npos)
   {
-    string expStr = term.substr(found + 1, string::npos);
+    string expStr = term.substr(foundExp + 1, string::npos);
     string subArg = SubArgument(expStr);
 
     if (expStr == subArg)
     {
-      string str = term.substr(found + 1, string::npos);
+      string str = term.substr(foundExp + 1, string::npos);
       stringstream(str) >> exp;
     }
     else
     {
       exp = calcEquation(subArg, num);
     }
+    term.erase(foundExp, string::npos);
   }
 
-  found = term.find('x');
+  size_t found = term.find('x');
   //If 'x' is not found then the term is a constant so the coefficient is assigned the constant. The final result will the the coefficient.
   if (found == string::npos)
     coeff = stof(term);
@@ -89,6 +90,7 @@ double ApprIntegral::CalcPolynomial(string term, double num)
     else
       x = pow(num, exp);
     
+    
     //if '/' is found then the term is qoutient like 1/x. 
     size_t divPos = term.find('/');
     if (divPos != string::npos)
@@ -100,7 +102,8 @@ double ApprIntegral::CalcPolynomial(string term, double num)
     //The value preceding either 'x' or '/' in the term. i.e. 10x or 10/x will both result coeff == 10. 
     stringstream(term.substr(0, found)) >> coeff;
   }
-
+  if (found == string::npos && foundExp != string::npos)
+    return pow(coeff, exp);
   x *= coeff;
   return x;
 }
