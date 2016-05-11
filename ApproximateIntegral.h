@@ -9,10 +9,10 @@ using namespace std;
 
 class ApprIntegral {
   static const string trig[];
-  static vector<string> TermSeperater(string str);
-  static double CalcPolynomial(string term, double num);
-  static double CalcTrig(string term, double num, int trigFuncIndex);
-  static double termCalc(string term, double num);
+  static vector<string> TermSeperater(string );
+  static double CalcPolynomial(string , double );
+  static double CalcTrig(string, double , const vector<int>& );
+  static double termCalc(string, double );
   static string SubArgument(string);
   ApprIntegral() {};
 public:
