@@ -105,8 +105,9 @@ double ApprIntegral::CalcPolynomial(string term, double num)
   return x;
 }
 
-double ApprIntegral::CalcTrig(string term, double num, int trigFuncIndex)
+double ApprIntegral::CalcTrig(string term, double num, const vector<int>& trigIndexes)
 {
+  double result = 1;
   double coeff = 1; //coefficient
   if (term.at(0) == '-')
     coeff *= -1;
@@ -126,29 +127,35 @@ double ApprIntegral::CalcTrig(string term, double num, int trigFuncIndex)
   //finds the term in the argument of the trig function
   
   //if there are no parentheses then the argument is assumed to be simply 'x'
-  string trigArg = SubArgument(term);
+  for (int i = 0; i < trigIndexes.size(); i++)
+  {
+    size_t currentTrigTerm = term.find(trig[trigIndexes[i]]);
+    string subTerm = term.substr(currentTrigTerm, string::npos);
+    string trigArg = SubArgument(subTerm);
     if (trigArg != "x" && trigArg != term)
       num = calcEquation(trigArg, num);
-  
 
-  double trig = 1;
-  switch (trigFuncIndex)
-  {
-  case 0: trig = sin(num);
-    break;
-  case 1: trig = cos(num);
-    break;
-  case 2: trig = tan(num);
-    break;
-  case 3: trig = 1 / sin(num);
-    break;
-  case 4: trig = 1 / cos(num);
-    break;
-  case 5: trig = 1 / tan(num);
-    break;
+
+    double trig = 1;
+    switch (trigIndexes[i])
+    {
+    case 0: trig = sin(num);
+      break;
+    case 1: trig = cos(num);
+      break;
+    case 2: trig = tan(num);
+      break;
+    case 3: trig = 1 / sin(num);
+      break;
+    case 4: trig = 1 / cos(num);
+      break;
+    case 5: trig = 1 / tan(num);
+      break;
+    }
+    result *= trig;
   }
 
-  return coeff * trig;
+  return coeff * result;
 }
 
 double ApprIntegral::termCalc(string term, double num)
@@ -161,23 +168,26 @@ double ApprIntegral::termCalc(string term, double num)
   //Trig Functions
 
   bool isTrig = false;
-  for (int i = 0; i < 6 && !isTrig; i++)
+  vector<int> trigIndexes;
+  for (int i = 0; i < 6  ; i++)
   {
     if (term.find(trig[i]) != string::npos)
     {
       isTrig = true;
-      x = CalcTrig(term, num, i);
+      trigIndexes.push_back(i);
     }
   }
-  if (!isTrig)
-  {
+  if(isTrig)
+    x = CalcTrig(term, num, trigIndexes);
+  else
     x = CalcPolynomial(term, num);
-  }
+
   return x;
 }
 
 //returns a substring of the argument of a function.
 //if there is no argument then the orignial term is returned.
+//in the case of function that cannot be simplified the first argument is returned. i.i sin(x + 1)cos(x) returns x + 1.
 string ApprIntegral::SubArgument(string term)
 {
   size_t leftParenth = term.find('(');
