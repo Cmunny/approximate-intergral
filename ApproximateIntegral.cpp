@@ -3,7 +3,7 @@
 #include <vector>
 #include <sstream>
 #include <cmath>
-#include "ApproximateIntergral.h"
+#include "ApproximateIntegral.h"
 using namespace std;
 
 const string ApprIntegral::trig[] = { "sin","cos","tan","csc","sec","cot" };
