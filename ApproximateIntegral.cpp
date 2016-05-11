@@ -29,16 +29,13 @@ vector<string> ApprIntegral::TermSeperater(string str)
     if (lastRightParenth != string::npos && firstLeftParenth != string::npos && found > firstLeftParenth && found < lastRightParenth)
       found = str.find_first_of("+-", found + 1);
 
-
     if (found != string::npos)
     {
       string s = str.substr(startPos, found - startPos);
       terms.push_back(s);
       startPos = found;
       found = str.find_first_of("+-", found + 1);
-
     }
-
   }
   terms.push_back(str.substr(startPos, string::npos));
   return terms;
@@ -64,8 +61,18 @@ double ApprIntegral::CalcPolynomial(string term, double num)
   size_t found = term.find('^');
   if (found != string::npos)
   {
-    string str = term.substr(found + 1, string::npos);
-    stringstream(str) >> exp;
+    string expStr = term.substr(found + 1, string::npos);
+    string subArg = SubArgument(expStr);
+
+    if (expStr == subArg)
+    {
+      string str = term.substr(found + 1, string::npos);
+      stringstream(str) >> exp;
+    }
+    else
+    {
+      exp = calcEquation(subArg, num);
+    }
   }
 
   found = term.find('x');
@@ -75,16 +82,10 @@ double ApprIntegral::CalcPolynomial(string term, double num)
   else
   {
     //calculates the substituted value
-    size_t leftParenth = term.find('(');
     //if there are no parentheses then the argument is assumed to be simply 'x'
-    if (leftParenth != string::npos)
-    {
-      size_t rightParenth = term.find(')');
-      string subArg = term.substr(leftParenth + 1, rightParenth - leftParenth - 1);
-
-
+    string subArg = SubArgument(term);
+    if (subArg != term)
       x = pow(calcEquation(subArg, num), exp);
-    }
     else
       x = pow(num, exp);
     
@@ -108,9 +109,7 @@ double ApprIntegral::CalcTrig(string term, double num, int trigFuncIndex)
 {
   double coeff = 1; //coefficient
   if (term.at(0) == '-')
-  {
     coeff *= -1;
-  }
 
   //Gets the coefficient of the term
   bool endCoeff = false;
@@ -125,16 +124,12 @@ double ApprIntegral::CalcTrig(string term, double num, int trigFuncIndex)
   stringstream(term.substr(0, i + 1)) >> coeff;
 
   //finds the term in the argument of the trig function
-  size_t leftParenth = term.find('(');
+  
   //if there are no parentheses then the argument is assumed to be simply 'x'
-  if (leftParenth != string::npos)
-  {
-    size_t rightParenth = term.find(')');
-    string trigArg = term.substr(leftParenth + 1, rightParenth - leftParenth - 1);
-
-    if (trigArg != "x")
+  string trigArg = SubArgument(term);
+    if (trigArg != "x" && trigArg != term)
       num = calcEquation(trigArg, num);
-  }
+  
 
   double trig = 1;
   switch (trigFuncIndex)
@@ -181,6 +176,19 @@ double ApprIntegral::termCalc(string term, double num)
   return x;
 }
 
+//returns a substring of the argument of a function.
+//if there is no argument then the orignial term is returned.
+string ApprIntegral::SubArgument(string term)
+{
+  size_t leftParenth = term.find('(');
+  if (leftParenth != string::npos)
+  {
+    size_t rightParenth = term.find(')');
+    string subArg = term.substr(leftParenth + 1, rightParenth - leftParenth - 1);
+    return subArg;
+  }
+  return term;
+}
 
 double ApprIntegral::calcEquation(string equation, double num)
 {

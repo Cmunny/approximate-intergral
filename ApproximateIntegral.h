@@ -13,6 +13,7 @@ class ApprIntegral {
   static double CalcPolynomial(string term, double num);
   static double CalcTrig(string term, double num, int trigFuncIndex);
   static double termCalc(string term, double num);
+  static string SubArgument(string);
   ApprIntegral() {};
 public:
    static double calcEquation(string equation, double num);
