@@ -6,7 +6,7 @@
 #include "ApproximateIntegral.h"
 using namespace std;
 
-const string ApprIntegral::trig[] = { "sin","cos","tan","csc","sec","cot" };
+const string ApprIntegral::trig[] = { "sin","cos","tan","csc","sec","cot", "arccos" "arcsin", "arctan", "cosh", "sinh", "tanh", "arccosh", "arcsinh", "arctanh",};
 
 vector<string> ApprIntegral::TermSeperater(string str)
 {
@@ -41,54 +41,57 @@ vector<string> ApprIntegral::TermSeperater(string str)
   return terms;
 }
 
-double ApprIntegral::CalcPolynomial(string term, double num)
+double ApprIntegral::CalcPolynomialAndExp(string term, double num)
 {
-  double coeff = 1;
+  double termConstant = 1;
   //removes the leading operator
-  //if the operator is negative the coefficient is made negative;
+  //if the operator is negative the termConstanticient is made negative;
   if (term.at(0) == '+')
     term.erase(0, 1);
 
   else if (term.at(0) == '-')
   {
     term.erase(0, 1);
-    coeff = -1;
+    termConstant = -1;
   }
 
-  int exp = 1;
+  double exponent = 1;
   double x = 1; //The result of the exponent calulation. Similar to the x in the term but simply left as 1 if the term is a constant 
   //determines if raised to a power. If yes then the exponent is extracted.
-  size_t foundExp = term.find('^');
-  if (foundExp != string::npos)
+  size_t foundExponent = term.find('^');
+  if (foundExponent != string::npos)
   {
-    string expStr = term.substr(foundExp + 1, string::npos);
-    string subArg = SubArgument(expStr);
+    string exponentStr = term.substr(foundExponent + 1, string::npos);
+    string subArg = SubArgument(exponentStr);
 
-    if (expStr == subArg)
+    if (exponentStr == subArg && term.find('x', foundExponent) )
     {
-      string str = term.substr(foundExp + 1, string::npos);
-      stringstream(str) >> exp;
+      string str = term.substr(foundExponent + 1, string::npos);
+      stringstream(str) >> exponent;
     }
     else
     {
-      exp = calcEquation(subArg, num);
+      exponent = calcEquation(subArg, num);
     }
-    term.erase(foundExp, string::npos);
+    term.erase(foundExponent, string::npos);
   }
 
   size_t found = term.find('x');
-  //If 'x' is not found then the term is a constant so the coefficient is assigned the constant. The final result will the the coefficient.
-  if (found == string::npos)
-    coeff = stof(term);
+  size_t foundE = term.find('e');
+  //If 'x' is not found then the term is a constant so the termConstanticient is assigned the constant. The final result will the the termConstanticient.
+  if (found == string::npos && term.find('e') == string::npos)
+    termConstant = stof(term);
+  else if (foundE != string::npos)
+    x = exp(exponent);
   else
   {
     //calculates the substituted value
     //if there are no parentheses then the argument is assumed to be simply 'x'
     string subArg = SubArgument(term);
     if (subArg != term)
-      x = pow(calcEquation(subArg, num), exp);
+      x = pow(calcEquation(subArg, num), exponent);
     else
-      x = pow(num, exp);
+      x = pow(num, exponent);
     
     
     //if '/' is found then the term is qoutient like 1/x. 
@@ -99,38 +102,39 @@ double ApprIntegral::CalcPolynomial(string term, double num)
       // the value of x is made reciprol of its current value.
       x = 1 / x;
     }
-    //The value preceding either 'x' or '/' in the term. i.e. 10x or 10/x will both result coeff == 10. 
-    stringstream(term.substr(0, found)) >> coeff;
+    //The value preceding either 'x' or '/' in the term. i.e. 10x or 10/x will both result termConstant == 10. 
+    stringstream(term.substr(0, found)) >> termConstant;
   }
-  if (found == string::npos && foundExp != string::npos)
-    return pow(coeff, exp);
-  x *= coeff;
+  if (found == string::npos && foundExponent != string::npos && foundE == string::npos)
+    return pow(termConstant, exponent);
+
+  x *= termConstant;
   return x;
 }
 
 double ApprIntegral::CalcTrig(string term, double num, const vector<int>& trigIndexes)
 {
   double result = 1;
-  double coeff = 1; //coefficient
+  double termConstant = 1; 
   if (term.at(0) == '-')
-    coeff *= -1;
+    termConstant *= -1;
 
-  //Gets the coefficient of the term
-  bool endCoeff = false;
+  //Gets the constant of the term
+  bool endtermConstant = false;
   int i = 0;
-  for (; !endCoeff || i < term.length(); i++)
+  for (; !endtermConstant || i < term.length(); i++)
   {
     if (!isdigit(term.at(i)))
     {
-      endCoeff = true;
+      endtermConstant = true;
     }
   }
-  stringstream(term.substr(0, i + 1)) >> coeff;
+  stringstream(term.substr(0, i + 1)) >> termConstant;
 
   //finds the term in the argument of the trig function
   
   //if there are no parentheses then the argument is assumed to be simply 'x'
-  for (int i = 0; i < trigIndexes.size(); i++)
+  for (i = 0; i < trigIndexes.size(); i++)
   {
     size_t currentTrigTerm = term.find(trig[trigIndexes[i]]);
     string subTerm = term.substr(currentTrigTerm, string::npos);
@@ -154,36 +158,56 @@ double ApprIntegral::CalcTrig(string term, double num, const vector<int>& trigIn
       break;
     case 5: trig = 1 / tan(num);
       break;
+    case 6: trig = acos(num);
+      break;
+    case 7: trig = asin(num);
+      break;
+    case 8: trig = atan(num);
+      break;
+    case 9: trig = cosh(num);
+      break;
+    case 10: trig = sinh(num);
+      break;
+    case 11: trig = tanh(num);
+      break;
+    case 12: trig = acosh(num);
+      break;
+    case 13: trig = asinh(num);
+      break;
+    case 14: trig = atanh(num);
+      break;
     }
     result *= trig;
   }
 
-  return coeff * result;
+  return termConstant * result;
 }
 
 double ApprIntegral::termCalc(string term, double num)
 {
-  double x = 0;
+  double x;
 
   //Determines what kind of term the string term is and calls the respective function to calculate the term.
   //Current supported types are:
   //Polynomials
   //Trig Functions
 
-  bool isTrig = false;
+  bool isPlainTrig = false;
+  size_t funcWithExp = term.find('^');
   vector<int> trigIndexes;
   for (int i = 0; i < 6  ; i++)
   {
     if (term.find(trig[i]) != string::npos)
     {
-      isTrig = true;
+      isPlainTrig = true;
       trigIndexes.push_back(i);
     }
   }
-  if(isTrig)
+  //if the term has an exponent it is routed through CalcPolynomialAndExp
+  if(isPlainTrig && funcWithExp == string::npos)
     x = CalcTrig(term, num, trigIndexes);
   else
-    x = CalcPolynomial(term, num);
+    x = CalcPolynomialAndExp(term, num);
 
   return x;
 }
