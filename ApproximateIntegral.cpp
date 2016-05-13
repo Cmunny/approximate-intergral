@@ -70,16 +70,14 @@ double ApprIntegral::CalcPolynomialAndExp(string term, double num)
       stringstream(str) >> exponent;
     }
     else
-    {
-      exponent = calcEquation(subArg, num);
-    }
+      exponent = CalcEquation(subArg, num);
     term.erase(foundExponent, string::npos);
   }
 
   size_t found = term.find('x');
   size_t foundE = term.find('e');
-  //If 'x' is not found then the term is a constant so the termConstanticient is assigned the constant. The final result will the the termConstanticient.
-  if (found == string::npos && term.find('e') == string::npos)
+  //If 'x' is not found then the term is a constant so the termConstant is assigned the constant. 
+  if (found == string::npos && foundE == string::npos)
     termConstant = stof(term);
   else if (foundE != string::npos)
     x = exp(exponent);
@@ -89,7 +87,7 @@ double ApprIntegral::CalcPolynomialAndExp(string term, double num)
     //if there are no parentheses then the argument is assumed to be simply 'x'
     string subArg = SubArgument(term);
     if (subArg != term)
-      x = pow(calcEquation(subArg, num), exponent);
+      x = pow(CalcEquation(subArg, num), exponent);
     else
       x = pow(num, exponent);
     
@@ -134,13 +132,14 @@ double ApprIntegral::CalcTrig(string term, double num, const vector<int>& trigIn
   //finds the term in the argument of the trig function
   
   //if there are no parentheses then the argument is assumed to be simply 'x'
+  //The loop calulate the value of each trig function in the term and multiplies them
   for (i = 0; i < trigIndexes.size(); i++)
   {
     size_t currentTrigTerm = term.find(trig[trigIndexes[i]]);
     string subTerm = term.substr(currentTrigTerm, string::npos);
     string trigArg = SubArgument(subTerm);
     if (trigArg != "x" && trigArg != term)
-      num = calcEquation(trigArg, num);
+      num = CalcEquation(trigArg, num);
 
 
     double trig = 1;
@@ -183,10 +182,8 @@ double ApprIntegral::CalcTrig(string term, double num, const vector<int>& trigIn
   return termConstant * result;
 }
 
-double ApprIntegral::termCalc(string term, double num)
+double ApprIntegral::TermCalc(string term, double num)
 {
-  double x;
-
   //Determines what kind of term the string term is and calls the respective function to calculate the term.
   //Current supported types are:
   //Polynomials
@@ -204,12 +201,16 @@ double ApprIntegral::termCalc(string term, double num)
     }
   }
   //if the term has an exponent it is routed through CalcPolynomialAndExp
-  if(isPlainTrig && funcWithExp == string::npos)
-    x = CalcTrig(term, num, trigIndexes);
-  else
-    x = CalcPolynomialAndExp(term, num);
+  if (funcWithExp == string::npos)
+  {
+    if (isPlainTrig)
+      return CalcTrig(term, num, trigIndexes);
+    if (term.find("log") != string::npos || term.find("ln") != string::npos)
+      return CalcLog(term, num);
+    return CalcPolynomialAndExp(term, num);
+  }
 
-  return x;
+  return CalcPolynomialAndExp(term, num);
 }
 
 //returns a substring of the argument of a function.
@@ -227,18 +228,31 @@ string ApprIntegral::SubArgument(string term)
   return term;
 }
 
-double ApprIntegral::calcEquation(string equation, double num)
+double ApprIntegral::CalcLog(string term, double num)
+{
+  double argumentNum = num;
+  string subArg = SubArgument(term);
+  argumentNum = CalcEquation(subArg, num);
+  if (argumentNum <= 0)
+    throw "Invalid argument for logarithm.";
+
+  if (term.find("ln") != string::npos)
+    return log(num);
+  return log10(num);
+}
+
+double ApprIntegral::CalcEquation(string equation, double num)
 {
   //Seperates the equation into terms and sums the result of each seperate term.
   vector<string> terms = TermSeperater(equation);
   double result = 0;
   for (int i = 0; i < terms.size(); i++)
-    result += termCalc(terms.at(i), num);
+    result += TermCalc(terms.at(i), num);
   return result;
 }
 
 
-double ApprIntegral::approximateIntegral(string equation, double a, double b, int numOfRects)
+double ApprIntegral::ApproximateIntegral(string equation, double a, double b, int numOfRects)
 {
 
   double deltaX = (b - a) / numOfRects;
@@ -248,11 +262,11 @@ double ApprIntegral::approximateIntegral(string equation, double a, double b, in
   for (double i = a; i <= b || n <= numOfRects; i += deltaX, n++)
   {
     if (n == 0 || n == numOfRects)
-      result += calcEquation(equation, i);
+      result += CalcEquation(equation, i);
     else if (n % 2 == 0)
-      result += 2 * calcEquation(equation, i);
+      result += 2 * CalcEquation(equation, i);
     else
-      result += 4 * calcEquation(equation, i);
+      result += 4 * CalcEquation(equation, i);
   }
 
   return (deltaX / 3) * result;
