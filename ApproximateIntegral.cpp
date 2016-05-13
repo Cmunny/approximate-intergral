@@ -233,8 +233,15 @@ double ApprIntegral::CalcLog(string term, double num)
   double argumentNum = num;
   string subArg = SubArgument(term);
   argumentNum = CalcEquation(subArg, num);
-  if (argumentNum <= 0)
-    throw "Invalid argument for logarithm.";
+  /*try
+  {
+    if (argumentNum <= 0)
+      throw "Invalid argument for logarithm.";
+  }
+  catch(const char* e)
+  {
+    
+  }*/
 
   if (term.find("ln") != string::npos)
     return log(num);
