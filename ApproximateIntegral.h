@@ -9,7 +9,7 @@ using namespace std;
 
 class ApprIntegral {
   static const string trig[];
-  static vector<string> TermSeperater(string);
+  static vector<string> SeperateTermByAdd(string);
   static double CalcPolynomialAndExp(string , double);
   static double CalcTrig(string, double, const vector<int>&);
   static double TermCalc(string, double);

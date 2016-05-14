@@ -8,7 +8,7 @@ using namespace std;
 
 const string ApprIntegral::trig[] = { "sin","cos","tan","csc","sec","cot", "arccos" "arcsin", "arctan", "cosh", "sinh", "tanh", "arccosh", "arcsinh", "arctanh",};
 
-vector<string> ApprIntegral::TermSeperater(string str)
+vector<string> ApprIntegral::SeperateTermByAdd(string str)
 {
   vector<string> terms;
   size_t found = str.find_first_of("+-");
@@ -233,16 +233,6 @@ double ApprIntegral::CalcLog(string term, double num)
   double argumentNum = num;
   string subArg = SubArgument(term);
   argumentNum = CalcEquation(subArg, num);
-  /*try
-  {
-    if (argumentNum <= 0)
-      throw "Invalid argument for logarithm.";
-  }
-  catch(const char* e)
-  {
-    
-  }*/
-
   if (term.find("ln") != string::npos)
     return log(num);
   return log10(num);
@@ -251,7 +241,7 @@ double ApprIntegral::CalcLog(string term, double num)
 double ApprIntegral::CalcEquation(string equation, double num)
 {
   //Seperates the equation into terms and sums the result of each seperate term.
-  vector<string> terms = TermSeperater(equation);
+  vector<string> terms = SeperateTermByAdd(equation);
   double result = 0;
   for (int i = 0; i < terms.size(); i++)
     result += TermCalc(terms.at(i), num);
