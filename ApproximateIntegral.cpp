@@ -41,12 +41,45 @@ vector<string> ApprIntegral::SeperateTermByAdd(string str)
   return terms;
 }
 
+vector<string> ApprIntegral::SeperateTermByMulti(string str)
+{
+  vector<string> terms;
+  size_t found = str.find_first_of("*/");
+  size_t startPos = 0;
+  size_t firstLeftParenth = str.find('(');
+  size_t lastRightParenth = str.rfind(')');
+
+  //ignores the the sign if it is the very beginning of term. i.e. -cosx + 1
+  if (found == 0)
+    found = str.find_first_of("*/", found + 1);
+
+  //seperates the equation into seperate terms and stores them the terms vector
+  //the leading operator is stored with term. i.e -3x or +x;
+  while (found != string::npos)
+  {
+    //skips the operators in between parentheses.
+    //i.e x + cos(1+x) gets seperated into x and +cos(1+x).
+   // if (lastRightParenth != string::npos && firstLeftParenth != string::npos && found > firstLeftParenth && found < lastRightParenth)
+     // found = str.find_first_of("*/", found + 1);
+
+    if (found != string::npos)
+    {
+      string s = str.substr(startPos, found - startPos);
+      terms.push_back(s);
+      startPos = found;
+      found = str.find_first_of("*/", found + 1);
+    }
+  }
+  terms.push_back(str.substr(startPos, string::npos));
+  return terms;
+}
+
 double ApprIntegral::CalcPolynomialAndExp(string term, double num)
 {
   double termConstant = 1;
   //removes the leading operator
   //if the operator is negative the termConstanticient is made negative;
-  if (term.at(0) == '+')
+  if (term.at(0) == '+' || term.at(0) == '*' || term.at(0) == '/')
     term.erase(0, 1);
 
   else if (term.at(0) == '-')
@@ -90,17 +123,8 @@ double ApprIntegral::CalcPolynomialAndExp(string term, double num)
       x = pow(CalcEquation(subArg, num), exponent);
     else
       x = pow(num, exponent);
-    
-    
-    //if '/' is found then the term is qoutient like 1/x. 
-    size_t divPos = term.find('/');
-    if (divPos != string::npos)
-    {
-      found = divPos;
-      // the value of x is made reciprol of its current value.
-      x = 1 / x;
-    }
-    //The value preceding either 'x' or '/' in the term. i.e. 10x or 10/x will both result termConstant == 10. 
+   
+    //The value preceding either 'x'
     stringstream(term.substr(0, found)) >> termConstant;
   }
   if (found == string::npos && foundExponent != string::npos && foundE == string::npos)
@@ -110,12 +134,18 @@ double ApprIntegral::CalcPolynomialAndExp(string term, double num)
   return x;
 }
 
-double ApprIntegral::CalcTrig(string term, double num, const vector<int>& trigIndexes)
+double ApprIntegral::CalcTrig(string term, double num)
 {
-  double result = 1;
+  int trigIndex = 0;
   double termConstant = 1; 
-  if (term.at(0) == '-')
-    termConstant *= -1;
+  if (term.at(0) == '+' || term.at(0) == '*' || term.at(0) == '/')
+    term.erase(0, 1);
+
+  else if (term.at(0) == '-')
+  {
+    term.erase(0, 1);
+    termConstant = -1;
+  }
 
   //Gets the constant of the term
   bool endtermConstant = false;
@@ -133,9 +163,16 @@ double ApprIntegral::CalcTrig(string term, double num, const vector<int>& trigIn
   
   //if there are no parentheses then the argument is assumed to be simply 'x'
   //The loop calulate the value of each trig function in the term and multiplies them
-  for (i = 0; i < trigIndexes.size(); i++)
+ 
+  size_t currentTrigTerm;
+  for (int i = 0; i < trig->size(); i++ )
   {
-    size_t currentTrigTerm = term.find(trig[trigIndexes[i]]);
+    currentTrigTerm = term.find(trig[i]);
+    trigIndex = i;
+    if (currentTrigTerm != string::npos)
+      break;
+  }
+      
     string subTerm = term.substr(currentTrigTerm, string::npos);
     string trigArg = SubArgument(subTerm);
     if (trigArg != "x" && trigArg != term)
@@ -143,7 +180,7 @@ double ApprIntegral::CalcTrig(string term, double num, const vector<int>& trigIn
 
 
     double trig = 1;
-    switch (trigIndexes[i])
+    switch (trigIndex)
     {
     case 0: trig = sin(num);
       break;
@@ -176,41 +213,53 @@ double ApprIntegral::CalcTrig(string term, double num, const vector<int>& trigIn
     case 14: trig = atanh(num);
       break;
     }
-    result *= trig;
-  }
+    
+  
 
-  return termConstant * result;
+  return termConstant * trig;
 }
 
-double ApprIntegral::TermCalc(string term, double num)
+double ApprIntegral::CalcTerm(string term, double num)
 {
   //Determines what kind of term the string term is and calls the respective function to calculate the term.
   //Current supported types are:
   //Polynomials
   //Trig Functions
-
-  bool isPlainTrig = false;
-  size_t funcWithExp = term.find('^');
-  vector<int> trigIndexes;
-  for (int i = 0; i < 6  ; i++)
+  double result = 1;
+  double x;
+  auto multiTerms = SeperateTermByMulti(term);
+  for (int i = 0; i < multiTerms.size(); i++)
   {
-    if (term.find(trig[i]) != string::npos)
+    bool isPlainTrig = false;
+    size_t funcWithExp = term.find('^');
+    int trigIndex = 0;
+    for (int j = 0; j < trig->size() && !isPlainTrig; j++)
     {
-      isPlainTrig = true;
-      trigIndexes.push_back(i);
+      if (term.find(trig[j]) != string::npos)
+      {
+        isPlainTrig = true;
+        trigIndex = j;
+      }
     }
-  }
-  //if the term has an exponent it is routed through CalcPolynomialAndExp
-  if (funcWithExp == string::npos)
-  {
-    if (isPlainTrig)
-      return CalcTrig(term, num, trigIndexes);
-    if (term.find("log") != string::npos || term.find("ln") != string::npos)
-      return CalcLog(term, num);
-    return CalcPolynomialAndExp(term, num);
-  }
+    //if the term has an exponent it is routed through CalcPolynomialAndExp
+    if (funcWithExp == string::npos)
+    {
+      if (isPlainTrig)
+        x = CalcTrig(multiTerms[i], num);
+      else if (term.find("log") != string::npos || term.find("ln") != string::npos)
+        x = CalcLog(multiTerms[i], num);
+      else
+        x = CalcPolynomialAndExp(multiTerms[i], num);
+    }
+    else
+      x = CalcPolynomialAndExp(multiTerms[i], num);
 
-  return CalcPolynomialAndExp(term, num);
+    if (term.find('/') != string::npos)
+      x = 1 / x; // the value of x is made reciprol of its current value.
+
+    result *= x;
+  }
+  return result;
 }
 
 //returns a substring of the argument of a function.
@@ -244,7 +293,7 @@ double ApprIntegral::CalcEquation(string equation, double num)
   vector<string> terms = SeperateTermByAdd(equation);
   double result = 0;
   for (int i = 0; i < terms.size(); i++)
-    result += TermCalc(terms.at(i), num);
+    result += CalcTerm(terms.at(i), num);
   return result;
 }
 
