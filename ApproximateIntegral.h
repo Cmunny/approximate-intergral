@@ -1,7 +1,6 @@
 #ifndef INTEGRAL_H
 #define INTEGRAL_H
 
-
 #include <string>
 #include <vector>
 
