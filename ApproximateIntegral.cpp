@@ -127,14 +127,13 @@ double ApprIntegral::CalcPolynomialAndExp(string term, double num)
   else
   {
     //calculates the substituted value
-    //if there are no parentheses then the argument is assumed to be simply 'x'
     string subArg = SubArgument(term);
     if (subArg != term && term != "x")
       x = pow(CalcEquation(subArg, num), exponent);
     else
       x = pow(num, exponent);
 
-    //The value preceding either 'x'
+    //The value preceding 'x'
     stringstream(term.substr(0, found)) >> termConstant;
   }
   if (found == string::npos && foundExponent != string::npos && foundE == string::npos)
@@ -158,16 +157,8 @@ double ApprIntegral::CalcTrig(string term, double num)
   }
 
   //Gets the constant of the term
-  bool endtermConstant = false;
-  int i = 0;
-  for (; !endtermConstant || i < term.length(); i++)
-  {
-    if (!isdigit(term.at(i)))
-    {
-      endtermConstant = true;
-    }
-  }
-  stringstream(term.substr(0, i + 1)) >> termConstant;
+  //This is multiplication in order to preserve the potenital negative quality of termConstant
+  termConstant *= GetConstantMultiplier(term);
 
   size_t currentTrigTerm;
   size_t argBegin = term.find('(');
@@ -240,22 +231,24 @@ double ApprIntegral::CalcTerm(string term, double num)
       if (term.find(trig[j]) != string::npos)
         isPlainTrig = true;
     }
-    //if the term has an exponent it is routed through CalcPolynomialAndExp
+    
     if (multiTerms[i] == "x")
       x = num;
+    //if the term has an exponent it is routed through CalcPolynomialAndExp
     else if (funcWithExp == string::npos)
     {
       if (isPlainTrig)
         x = CalcTrig(multiTerms[i], num);
       else if (multiTerms[i].find("log") != string::npos || multiTerms[i].find("ln") != string::npos)
-        x = CalcLog(multiTerms[i], num);
+        x = CalcLog(multiTerms[i], num); // Calculates the natural log or the common log
       else if (multiTerms[i].find('e') == string::npos && multiTerms[i].find('x') == string::npos)
-        x = CalcConstant(multiTerms[i]);
+        x = CalcConstant(multiTerms[i]);// Calculates a constant expression witout an exponent such as 2pi or e
+                                        //Constant multipliers of functions are handled in their respective functions
       else
-        x = CalcPolynomialAndExp(multiTerms[i], num);
+        x = CalcPolynomialAndExp(multiTerms[i], num); // Calculates a term with an x in it without an exponent
     }
     else
-      x = CalcPolynomialAndExp(multiTerms[i], num);
+      x = CalcPolynomialAndExp(multiTerms[i], num); 
 
     if (term.find('/') != string::npos)
       x = 1 / x; // the value of x is made reciprocal of its current value.
@@ -281,11 +274,12 @@ string ApprIntegral::SubArgument(string term)
 
 double ApprIntegral::CalcLog(string term, double num)
 {
+  double termConstant = GetConstantMultiplier(term);
   string subArg = SubArgument(term);
   double argumentNum = CalcEquation(subArg, num);
   if (term.find("ln") != string::npos)
-    return log(argumentNum);
-  return log10(argumentNum);
+    return termConstant * log(argumentNum);
+  return termConstant * log10(argumentNum);
 }
 
 double ApprIntegral::CalcConstant(string term)
@@ -318,6 +312,25 @@ double ApprIntegral::CalcConstant(string term)
   
   return coefficient;
 
+}
+
+double ApprIntegral::GetConstantMultiplier(string term)
+{
+  double termConstant  = 1;
+  //Gets rid of parentheses if they surrounbd the whole term
+  if (term[0] == '(')
+    term = SubArgument(term);
+
+  if (isdigit(term.at(0)))
+  {
+    bool hasTermConstant = false;
+    int i = 0;
+    for (; !hasTermConstant && i < term.length(); i++)
+      if (!isdigit(term.at(i)))
+        hasTermConstant = true;
+    stringstream(term.substr(0, i + 1)) >> termConstant;
+  }
+  return termConstant;
 }
 
 double ApprIntegral::CalcEquation(string equation, double num)

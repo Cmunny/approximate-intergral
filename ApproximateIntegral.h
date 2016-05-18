@@ -17,6 +17,7 @@ class ApprIntegral {
   static string SubArgument(string);
   static double CalcLog(string, double);
   static double CalcConstant(string);
+  static double GetConstantMultiplier(string);
   ApprIntegral(){}
 public:
    static double CalcEquation(string equation, double num);
