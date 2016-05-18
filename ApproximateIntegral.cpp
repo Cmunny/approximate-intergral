@@ -6,7 +6,7 @@
 using namespace std;
 
 const string ApprIntegral::trig[] = {"sin","cos","tan","csc","sec","cot", "arccos" "arcsin", "arctan", "cosh", "sinh", "tanh", "arccosh", "arcsinh", "arctanh",};
-
+const double ApprIntegral::PI = 3.14159265359;
 vector<string> ApprIntegral::SeperateTermByAdd(string str)
 {
   vector<string> terms;
@@ -45,10 +45,6 @@ vector<string> ApprIntegral::SeperateTermByMulti(string str)
   vector<string> terms;
   size_t found = str.find_first_of("*/");
   size_t startPos = 0;
-
-
-  size_t lastRightParenth = str.rfind(')');
-  //ignores the the sign if it is the very beginning of term. i.e. -cosx + 1
 
   //seperates the equation into seperate terms and stores them the terms vector
   //the leading operator is stored with term. i.e -3x or +x;
@@ -111,7 +107,7 @@ double ApprIntegral::CalcPolynomialAndExp(string term, double num)
     string exponentStr = term.substr(foundExponent + 1, string::npos);
     string subArg = SubArgument(exponentStr);
 
-    if (exponentStr == subArg && term.find('x', foundExponent))
+    if (exponentStr == subArg && term.find('x', foundExponent) == string::npos)
     {
       string str = term.substr(foundExponent + 1, string::npos);
       stringstream(str) >> exponent;
@@ -125,7 +121,7 @@ double ApprIntegral::CalcPolynomialAndExp(string term, double num)
   size_t foundE = term.find('e');
   //If 'x' is not found then the term is a constant so the termConstant is assigned the constant. 
   if (found == string::npos && foundE == string::npos)
-    termConstant = stof(term);
+    termConstant = CalcEquation(term, num);
   else if (foundE != string::npos)
     x = exp(exponent);
   else
@@ -253,6 +249,8 @@ double ApprIntegral::CalcTerm(string term, double num)
         x = CalcTrig(multiTerms[i], num);
       else if (multiTerms[i].find("log") != string::npos || multiTerms[i].find("ln") != string::npos)
         x = CalcLog(multiTerms[i], num);
+      else if (multiTerms[i].find('e') == string::npos && multiTerms[i].find('x') == string::npos)
+        x = CalcConstant(multiTerms[i]);
       else
         x = CalcPolynomialAndExp(multiTerms[i], num);
     }
@@ -288,6 +286,38 @@ double ApprIntegral::CalcLog(string term, double num)
   if (term.find("ln") != string::npos)
     return log(argumentNum);
   return log10(argumentNum);
+}
+
+double ApprIntegral::CalcConstant(string term)
+{
+  double coefficient = 1;
+  if (term.at(0) == '+' || term.at(0) == '*' || term.at(0) == '/')
+    term.erase(0, 1);
+  else if (term.at(0) == '-')
+  {
+    term.erase(0, 1);
+    coefficient = -1;
+  }
+
+  string constantArg;
+  if (term.find('(') != string::npos)
+    constantArg = SubArgument(term);
+  else
+    constantArg = term;
+
+  bool endtermCoefficient = false;
+  int i = 0;
+  for (; !endtermCoefficient && i < constantArg.length(); i++)
+    if (!isdigit(constantArg.at(i)))
+      endtermCoefficient = true;
+
+  stringstream(constantArg.substr(0, i + 1)) >> coefficient;
+
+  if (term.find("pi") != string::npos)
+    return coefficient * PI;
+  
+  return coefficient;
+
 }
 
 double ApprIntegral::CalcEquation(string equation, double num)

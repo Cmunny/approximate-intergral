@@ -8,6 +8,7 @@ using namespace std;
 
 class ApprIntegral {
   static const string trig[];
+  static const double PI;
   static vector<string> SeperateTermByAdd(string);
   static vector<string> SeperateTermByMulti(string);
   static double CalcPolynomialAndExp(string , double);
@@ -15,6 +16,7 @@ class ApprIntegral {
   static double CalcTerm(string, double);
   static string SubArgument(string);
   static double CalcLog(string, double);
+  static double CalcConstant(string);
   ApprIntegral(){}
 public:
    static double CalcEquation(string equation, double num);
